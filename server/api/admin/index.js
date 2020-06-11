@@ -1,5 +1,8 @@
 module.exports = (useRouter, crud) => {
 
+    // 商品的操作
+    require("./goods")(useRouter, crud);
+
     // 管理员登录
     useRouter.post("/admin_login", (req, res) => {
         crud("SELECT * FROM `admin_users` WHERE adminName=? AND adminPassword=?",

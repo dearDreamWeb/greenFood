@@ -46,14 +46,14 @@ class ProductManage extends React.Component {
         let requestUrl = null,
             requestParams = null;
         if (this.state.keyWord) {
-            requestUrl = "/manage/product/search.do";
+            requestUrl = "/api/init_goods/search";
             requestParams = {
                 [this.state.selectValue]: this.state.keyWord,
                 pageSize: pagination.pageSize,
                 pageNum: pagination.current
             }
         } else {
-            requestUrl = "/manage/product/list.do";
+            requestUrl = "/api/init_goods/list";
             requestParams = {
                 pageSize: pagination.pageSize,
                 pageNum: pagination.current
@@ -68,9 +68,9 @@ class ProductManage extends React.Component {
             // 请求成功后数据赋值
             if (res.data.status === 0) {
                 this.setState({
-                    data: res.data.data.list,
+                    data: res.data.list,
                     loading: false,
-                    pagination: Object.assign(this.state.pagination, pagination, { total: res.data.data.total })
+                    pagination: Object.assign(this.state.pagination, pagination, { total: res.data.total })
                 })
             } else {
                 message.warning(res.data.msg);
@@ -86,13 +86,13 @@ class ProductManage extends React.Component {
         this.setState({ loading: true });
         axios({
             method: "get",
-            url: "/manage/product/list.do"
+            url: "/api/init_goods"
         }).then(res => {
             // 请求成功后数据赋值
             if (res.data.status === 0) {
                 this.setState({
-                    data: res.data.data.list,
-                    pagination: Object.assign({}, this.state.pagination, { total: res.data.data.total }),
+                    data: res.data.list,
+                    pagination: Object.assign({}, this.state.pagination, { total: res.data.total }),
                     loading: false
                 })
             }
@@ -101,30 +101,6 @@ class ProductManage extends React.Component {
         })
 
     };
-
-    // 改变商品的状态,第一个参数是整行数据，第二个参数是想要变成的状态
-    changeStatus(record, wantStatus) {
-        if (record.status !== wantStatus) {
-            axios({
-                method: "get",
-                url: "/manage/product/set_sale_status.do",
-                params: {
-                    productId: record.id,
-                    status: wantStatus
-                }
-            }).then(res => {
-                if (res.data.status === 0) {
-                    message.success(res.data.data);
-                    // 重新获取一下数据
-                    this.handleTableChange(this.state.pagination);
-                } else {
-                    message.error(res.data.data);
-                }
-            }).catch(err => {
-                console.log(err);
-            })
-        }
-    }
 
     /** 
      * 搜索组件提交搜索框内容，过滤查找一下
@@ -140,15 +116,15 @@ class ProductManage extends React.Component {
             } else {
                 axios({
                     method: "get",
-                    url: "/manage/product/search.do",
+                    url: "/api/init_goods/search",
                     params: {
                         [value.selectValue]: value.keyWord
                     }
                 }).then(res => {
                     if (res.data.status === 0) {
                         this.setState({
-                            data: res.data.data.list,
-                            pagination: Object.assign({}, this.state.pagination, { current: 1, total: res.data.data.total })
+                            data: res.data.list,
+                            pagination: Object.assign({}, this.state.pagination, { current: 1, total: res.data.total })
                         })
                     }
                 }).catch(err => {
@@ -162,12 +138,12 @@ class ProductManage extends React.Component {
 
     // 点击详情按钮跳转到对应商品的详情页面
     jumpProductDetail(data) {
-        this.props.history.push({ pathname: '/product/detail', state: { id: data.id } });
+        this.props.history.push({ pathname: '/product/detail', state: { productId: data.productId } });
     }
 
     // 点击编辑按钮跳转到对应的商品编辑页面
     jumpProductEdit(data) {
-        this.props.history.push({ pathname: '/product/edit', state: { id: data.id } });
+        this.props.history.push({ pathname: '/product/edit', state: { productId: data.productId } });
     }
 
     render() {
@@ -175,35 +151,18 @@ class ProductManage extends React.Component {
         const columns = [
             {
                 title: '商品ID',
-                dataIndex: 'id',
+                dataIndex: 'productId',
                 // width: '4rem',
             },
             {
                 title: '商品信息',
-                dataIndex: 'name',
+                dataIndex: 'productName',
                 // width: '20%',
             },
             {
                 title: '价格',
                 dataIndex: 'price',
-                render: data => "￥" + data
-            },
-            {
-                title: '状态',
-                dataIndex: 'status',
-                width: '10%',
-                render: (data, record) => {
-                    return (<span className="statusWrap">
-                        <a
-                            className={`status ${data === 1 ? "active" : ""}`}
-                            onClick={() => this.changeStatus(record, 1)}
-                        >在售</a>
-                        <a
-                            className={`status ${data === 2 ? "active" : ""}`}
-                            onClick={() => this.changeStatus(record, 2)}
-                        >下架</a>
-                    </span>)
-                }
+                render: data => "￥" + data + "/斤"
             },
             {
                 title: '操作',
