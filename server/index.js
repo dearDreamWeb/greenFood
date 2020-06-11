@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const history = require('connect-history-api-fallback');
+const bodyParser = require("body-parser");
 
 const crud = require("./crud"); // 引入crud接口
 
@@ -11,9 +12,13 @@ app.use(history());
 
 app.listen(3000);
 
+// post的请求body-parser
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 // 解决跨域
 const corsOptions = {
-    origin: "http://localhost:8080",
+    origin: ["http://localhost:8080", "http://localhost:6060"],
     optionsSuccessStatus: 200,
     credentials: true
 };
@@ -23,17 +28,24 @@ app.use(cors(corsOptions));
 const useRouter = express.Router();
 app.use("/api", useRouter);
 
+
+
+const imageUrl = "http://localhost:3000/images/";//图片服务器的根地址
+
 // 引入收货地址的api
 require("./api/address")(useRouter, crud);
 
 // 引入订单的api
 require("./api/order")(useRouter, crud);
 
+// 引入后台管理的api
+require("./api/admin")(useRouter, crud);
+
 // 初始化商品
 useRouter.use("/goods", (req, res) => {
     crud("SELECT * FROM `goods` ORDER BY price;", [], data => {
         data.forEach(item => {
-            item.productImageUrl = "http://localhost:3000/images/" + item.productImageUrl;
+            item.productImageUrl = imageUrl + item.productImageUrl;
         });
         res.json({
             "goods": data
@@ -69,7 +81,7 @@ useRouter.use("/orderPrice", (req, res) => {
     orderBy = req.query.default ? "desc" : "asc"; // 升序还是降序
     crud("SELECT * FROM `goods`WHERE price BETWEEN ? AND ? ORDER BY price " + orderBy + ";", [minPrice, maxPrice], data => {
         data.forEach(item => {
-            item.productImageUrl = "http://192.168.199.106:3000/images/" + item.productImageUrl;
+            item.productImageUrl = imageUrl + item.productImageUrl;
         });
         res.json({
             "goods": data
@@ -184,7 +196,7 @@ useRouter.use("/getCart", (req, res) => {
                 "status": 1,
                 data
             });
-        }) 
+        })
     }
 
 });

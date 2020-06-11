@@ -1,0 +1,45 @@
+.main {
+  .site-card-wrapper {
+    .item {
+      margin: 0 auto;
+      width: 80%;
+      .content-wrap {
+        text-align: center;
+        color: #fff;
+        .title {
+          font-size: 4rem;
+          color: #fff;
+        }
+        .footer {
+          font-size: 1.2rem;
+        }
+      }
+
+      &:hover {
+        opacity: 0.8;
+      }
+      @media screen and (max-width: 578px) {
+        width: 100%;
+        margin-bottom: 10px;
+        .content-wrap {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          .title {
+            order: 1;
+            font-size: 1.5rem;
+            margin-bottom: 0;
+          }
+          .footer {
+            // padding-right: 1rem;
+            font-size: 1rem;
+            &::after{
+                display: inline-block;
+                content: "："
+            }
+          }
+        }
+      }
+    }
+  }
+}

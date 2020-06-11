@@ -1,0 +1,10 @@
+.navSide {
+  .site-layout-background {
+      @media screen and (max-width: 578px) {
+          flex: 0 0 100% !important;
+          max-width: 100% !important;
+          min-width: 100% !important;
+          width: 100% !important;
+      }
+  }
+}

@@ -38,14 +38,14 @@
             class="goodsItem"
           >
             <img
-              src="http://192.168.199.106:3000/images/loading-svg/loading-bars.svg"
+              src="http://localhost/images/loading-svg/loading-bars.svg"
               class="images"
               data-isLoaded="0"
               :data-src="item.productImageUrl"
               ref="images"
             />
             <h1 class="text">{{ item.productName }}</h1>
-            <p class="price">￥{{ item.price }}</p>
+            <p class="price">￥{{ item.price }}/斤</p>
             <el-button type="danger" plain class="btn" @click="addCart(item)"
               >加入购物车</el-button
             >
@@ -64,13 +64,13 @@ export default {
       goods: [],
       choose: [
         "所有",
-        "0.00 - 100.00",
-        "100.00 - 500.00",
-        "500.00 - 1000.00",
-        "1000.00 - 2000.00"
+        "0.00 - 5.00",
+        "5.00 - 10.00",
+        "10.00 - 30.00",
+        "30.00 - 100.00",
       ],
       activeIndex: 0,
-      orderByDefault: true
+      orderByDefault: true,
     };
   },
   methods: {
@@ -78,7 +78,7 @@ export default {
     initGoods() {
       this.$axios({
         method: "get",
-        url: "/goods"
+        url: "/goods",
       })
         .then(res => {
           this.goods = res.data.goods;
@@ -157,8 +157,8 @@ export default {
         params: {
           min: arr[0],
           max: arr[1],
-          default: this.orderByDefault
-        }
+          default: this.orderByDefault,
+        },
       })
         .then(res => {
           this.goods = res.data.goods;
@@ -195,8 +195,8 @@ export default {
             name: data.productName,
             count: data.count,
             price: data.price,
-            imgUrl: data.productImageUrl
-          }
+            imgUrl: data.productImageUrl,
+          },
         })
           .then(res => {
             if (res.data.message) {
@@ -213,7 +213,7 @@ export default {
       } else {
         this.$message.warning("未登录，请先登录！");
       }
-    }
+    },
   },
   created() {
     this.initGoods();
@@ -225,8 +225,8 @@ export default {
     next();
   },
   components: {
-    NavBrand
-  }
+    NavBrand,
+  },
 };
 </script>
 
@@ -269,6 +269,7 @@ export default {
       border: 1px solid rgba(77, 77, 77, 0.1);
       .images {
         width: 100%;
+        max-height: 294px;
       }
       .text {
         padding: 1rem 0;

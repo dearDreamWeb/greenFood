@@ -1,0 +1,14 @@
+.home {
+  .main {
+    .content_layout {
+      padding: "0 24px 24px";
+    }
+    @media screen and (max-width: "578px") {
+      flex-direction: column !important;
+      .content_layout {
+        overflow: auto;
+        background: #fff;
+      }
+    }
+  }
+}

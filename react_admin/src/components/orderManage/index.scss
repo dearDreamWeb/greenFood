@@ -1,0 +1,29 @@
+.productManage {
+  position: relative;
+  // 添加商品按钮
+  .addProduct {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+  }
+  // 修改的antd中的td的格式，为了移动端表头不换行
+  .ant-table-row {
+    .ant-table-cell {
+      &:nth-child(1) {
+        min-width: 5rem;
+      }
+      &:nth-child(2) {
+        min-width: 5rem;
+      }
+      &:nth-child(3) {
+        min-width: 7rem;
+      }
+      &:nth-child(4) {
+        min-width: 7rem;
+      }
+      &:nth-child(5) {
+        min-width: 7rem;
+      }
+    }
+  }
+}

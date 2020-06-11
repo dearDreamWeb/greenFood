@@ -1,0 +1,25 @@
+.navTop {
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    .dropDown,
+    .loginLink {
+      margin-left: auto;
+    }
+    @media screen and (max-width: 576px) {
+      height: auto;
+      padding: 0 0 10px 10px;
+      .dropDown {
+        display: flex;
+        align-items: center;
+        margin-left: 0;
+        line-height: 1;
+      }
+      .loginLink {
+        margin-right: 10px;
+        font-size: 18px;
+        // color: #fff;
+      }
+    }
+  }
+}

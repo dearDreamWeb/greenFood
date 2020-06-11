@@ -1,0 +1,10 @@
+.productEdit {
+  .submit {
+    @media screen and (max-width: 578px) {
+        // antd中的样式
+      .ant-col {
+        margin-left: 0;
+      }
+    }
+  }
+}
