@@ -34,7 +34,7 @@
       </el-table-column>
       <el-table-column prop="name" label="商品总价" align="center">
         <template slot-scope="scope">
-          ￥{{ scope.row.price * scope.row.count }}
+          ￥{{ (scope.row.price * scope.row.count).toFixed(2) }}
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center">

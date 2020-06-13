@@ -70,7 +70,7 @@ export default {
     return {
       step: 1,
       tableData: [],
-      addressDefault: []
+      addressDefault: [],
     };
   },
   methods: {
@@ -78,7 +78,7 @@ export default {
     initOrderData() {
       this.$axios({
         method: "get",
-        url: "/getOrderData"
+        url: "/getOrderData",
       })
         .then(res => {
           if (res.data.status === 1) {
@@ -99,20 +99,20 @@ export default {
           {
             confirmButtonText: "确定",
             cancelButtonText: "取消",
-            type: "warning"
+            type: "warning",
           }
         )
           .then(() => {
             this.$message({
               type: "success",
-              message: "正在支付中..."
+              message: "正在支付中...",
             });
             return true;
           })
           .catch(() => {
             this.$message({
               type: "info",
-              message: "已取消支付"
+              message: "已取消支付",
             });
             return false;
           });
@@ -130,15 +130,15 @@ export default {
               cartIdArr,
               resultMoney: this.result,
               orderInfo: JSON.stringify(this.tableData),
-              address: this.addressDefault[0].userAddress
-            }
+              address: this.addressDefault[0].userAddress,
+            },
           })
             .then(res => {
               if (res.data.status === 1) {
                 setTimeout(() => {
                   this.$message({
                     type: "success",
-                    message: "支付成功"
+                    message: "支付成功",
                   });
                   this.$router.push({ name: "produceOrderLink" });
                 }, 4000);
@@ -152,16 +152,16 @@ export default {
         // 当订单页面没有要结算的商品或者默认地址时，提示用户，并不做跳转
         this.$message.error("未设置默认地址或者没有添加要结算商品！");
       }
-    }
+    },
   },
   computed: {
     result() {
       let money = 0;
       this.tableData.forEach(item => {
-        money += item.price;
+        money += item.price * item.count;
       });
-      return money;
-    }
+      return money.toFixed(2);
+    },
   },
   created() {
     this.initOrderData();
@@ -178,8 +178,8 @@ export default {
   },
   components: {
     NavBrand,
-    vStep: Step
-  }
+    vStep: Step,
+  },
 };
 </script>
 

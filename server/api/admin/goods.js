@@ -1,4 +1,4 @@
-module.exports = (useRouter, crud, app) => {
+module.exports = (useRouter, crud) => {
 
     // 初始化商品数据
     useRouter.get("/init_goods", (req, res) => {

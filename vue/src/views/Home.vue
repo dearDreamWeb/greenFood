@@ -147,6 +147,8 @@ export default {
     },
     // 查找价格范围
     filterPrice(index) {
+      // 每次查找价格范围，都会重置一下价格排序的箭头
+      this.orderByDefault = true;
       this.activeIndex = index;
       let arr = this.choose[index].includes("-")
         ? this.choose[index].split("-")

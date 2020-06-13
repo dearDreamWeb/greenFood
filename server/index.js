@@ -31,7 +31,7 @@ app.use("/api", useRouter);
 
 
 
-const imageUrl = "http://localhost:3000/images/";//图片服务器的根地址
+// const imageUrl = "http://localhost:3000/images/";//图片服务器的根地址
 
 // 引入收货地址的api
 require("./api/address")(useRouter, crud);
@@ -45,9 +45,6 @@ require("./api/admin")(useRouter, crud, app);
 // 初始化商品
 useRouter.use("/goods", (req, res) => {
     crud("SELECT * FROM `goods` ORDER BY price;", [], data => {
-        data.forEach(item => {
-            item.productImageUrl = imageUrl + item.productImageUrl;
-        });
         res.json({
             "goods": data
         })
@@ -79,11 +76,8 @@ useRouter.use("/orderPrice", (req, res) => {
         minPrice = 0;
         maxPrice = 1000000000;
     }
-    orderBy = req.query.default ? "desc" : "asc"; // 升序还是降序
+    orderBy = req.query.default ? "asc" : "desc"; // 升序还是降序
     crud("SELECT * FROM `goods`WHERE price BETWEEN ? AND ? ORDER BY price " + orderBy + ";", [minPrice, maxPrice], data => {
-        data.forEach(item => {
-            item.productImageUrl = imageUrl + item.productImageUrl;
-        });
         res.json({
             "goods": data
         })
@@ -116,17 +110,16 @@ useRouter.use("/login", (req, res) => {
             req.session.userInfo = data[0];
             // 查询购物车总数
             crud("SELECT * FROM `cart`LEFT JOIN `users` ON cart.uid = users.id WHERE cart.uid = ?;", [data[0].id], data1 => {
-                if (data1.length > 0) {
-                    let num = 0;
-                    data1.forEach(item => {
-                        num += item.count;
-                    });
-                    res.json({
-                        "isLogin": 1,
-                        "data": req.session.userInfo,
-                        num
-                    });
-                }
+                let num = 0;
+                data1.forEach(item => {
+                    num += item.count;
+                });
+                res.json({
+                    "isLogin": 1,
+                    "data": req.session.userInfo,
+                    num: data1.length > 0 ? num : 0
+                });
+
             })
         } else {
             res.json({
