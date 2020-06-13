@@ -6,6 +6,18 @@
     right: 1rem;
     top: 1rem;
   }
+
+  .order_statusWrapper {
+    display: flex;
+    justify-content: space-around;
+    .checked {
+      padding: 0 2px;
+      color: #fff;
+      background: #f28f8f;
+      box-shadow: 0px 1px 4px 0px #801d1d;
+    }
+  }
+
   // 修改的antd中的td的格式，为了移动端表头不换行
   .ant-table-row {
     .ant-table-cell {

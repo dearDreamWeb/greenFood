@@ -43,14 +43,14 @@ class OrderManage extends React.Component {
     handleTableChange = (pagination) => {
         axios({
             method: "get",
-            url: "/manage/order/list.do",
+            url: "/api/order/list",
             params: {
                 pageSize: pagination.pageSize,
                 pageNum: pagination.current
             }
         }).then(res => {
             this.setState({
-                data: res.data.data.list,
+                data: res.data.list,
                 loading: false,
                 pagination: Object.assign(this.state.pagination, pagination)
             })
@@ -64,14 +64,14 @@ class OrderManage extends React.Component {
         this.setState({ loading: true });
         return axios({
             method: "get",
-            url: "/manage/order/list.do"
+            url: "/api/init_orders"
         }).then(res => {
             // 请求成功后数据赋值
             if (res.data.status === 0) {
                 this.setState({
-                    data: res.data.data.list,
+                    data: res.data.list,
                     loading: false,
-                    pagination: Object.assign({}, this.state.pagination, { total: res.data.data.total })
+                    pagination: Object.assign({}, this.state.pagination, { total: res.data.total })
                 })
             }
         }).catch(err => {
@@ -94,17 +94,16 @@ class OrderManage extends React.Component {
             } else {
                 axios({
                     method: "get",
-                    url: "/manage/order/search.do",
+                    url: "/api/order/search",
                     params: {
-                        orderNo: this.state.keyWord
+                        orderId: this.state.keyWord
                     }
                 }).then(res => {
                     if (res.data.status === 0) {
                         this.setState({
-                            data: res.data.data.list,
-                            pagination: Object.assign({}, this.state.pagination, { current: 1, total: res.data.data.total })
+                            data: res.data.list,
+                            pagination: Object.assign({}, this.state.pagination, { current: 1, total: res.data.total })
                         })
-                        console.log(this.state)
                     } else {
                         message.warning(res.data.msg)
                     }
@@ -119,9 +118,37 @@ class OrderManage extends React.Component {
 
     }
 
+
+    // 点击改变订单状态
+    changeOrderStatus(rowData) {
+        let changeStatus = rowData.status === 1 ? 0 : 1;
+        axios({
+            method: "get",
+            url: "/api/order_changeStatus",
+            params: {
+                orderId: rowData.orderId,
+                status: changeStatus
+            }
+        }).then(res => {
+            if (res.data.status === 0) {
+                // 数据库修改完成后，遍历data数据找到相应的数据，更新status值
+                let newData = this.state.data;
+                newData.forEach(item => {
+                    if (item.orderId === rowData.orderId) {
+                        item.status = changeStatus;
+                    }
+                })
+
+                this.setState({
+                    data: newData
+                })
+            }
+        }).catch(err => console.log(err));
+    }
+
     // 点击修改名称出现模态框
     jumpOrderDetail(data) {
-        this.props.history.push({ pathname: "/order/manage/detail", state: { id: data.orderNo } })
+        this.props.history.push({ pathname: "/order/manage/detail", state: { orderId: data.orderId } })
     }
 
     render() {
@@ -129,23 +156,38 @@ class OrderManage extends React.Component {
         const columns = [
             {
                 title: '订单号',
-                dataIndex: 'orderNo'
+                dataIndex: 'orderId'
             },
             {
                 title: '收件人',
-                dataIndex: 'receiverName'
+                dataIndex: 'receiver'
             },
             {
                 title: '订单状态',
-                dataIndex: 'statusDesc'
+                dataIndex: 'status',
+                render: (data, rowData) => {
+                    return (
+                        <p className="order_statusWrapper">
+                            <a
+                                className={data === 0 ? "checked" : ""}
+                                onClick={data === 0 ? null : () => { this.changeOrderStatus(rowData) }}
+                            >未发货</a>
+                            <a
+                                className={data === 1 ? "checked" : ""}
+                                onClick={data === 1 ? null : () => { this.changeOrderStatus(rowData) }}
+                            >已发货</a>
+                        </p >
+                    )
+                }
             },
             {
                 title: '订单总价',
-                dataIndex: 'payment'
+                dataIndex: 'orderMoney',
+                render: data => data + "元"
             },
             {
                 title: '创建时间',
-                dataIndex: 'createTime'
+                dataIndex: 'orderTime'
             },
             {
                 title: '操作',

@@ -27,8 +27,9 @@ module.exports = (useRouter, crud) => {
         let uid = req.session.userInfo.id; // 订单用户
         let cartIdArr = req.query.cartIdArr;      // 结算的所有商品的id
         let address = req.query.address;         // 订单地址
+        let receiver = req.query.receiver;         // 订单地址
 
-        crud("INSERT INTO `order` SET ?", { orderId, orderTime, uid, orderMoney, orderInfo, address }, data => {
+        crud("INSERT INTO `order` SET ?", { orderId, orderTime, uid, orderMoney, orderInfo, address, receiver }, data => {
             crud("DELETE FROM `cart` WHERE cartId in (?) ", [cartIdArr], data => {
                 res.json({
                     "status": 1

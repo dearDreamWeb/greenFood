@@ -28,7 +28,7 @@
         </el-table-column>
         <el-table-column prop="address" label="总金额">
           <template slot-scope="scope">
-            <span>￥{{ scope.row.price * scope.row.count }}</span>
+            <span>￥{{ (scope.row.price * scope.row.count).toFixed(2) }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -131,6 +131,7 @@ export default {
               resultMoney: this.result,
               orderInfo: JSON.stringify(this.tableData),
               address: this.addressDefault[0].userAddress,
+              receiver: this.addressDefault[0].receiver,
             },
           })
             .then(res => {

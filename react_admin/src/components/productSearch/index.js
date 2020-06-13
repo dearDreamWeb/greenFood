@@ -21,25 +21,15 @@ class ProductSearch extends React.Component {
 
     // 输入框的内容提交，更新state，在提交给父组件
     inputValue(value) {
-        let flag = true;
         value = value.trim();
-        // 判断当id查询是，输入框的值是否为数字，不是提示消息，是的话就继续
-        if (this.state.selectValue === "productId") {
-            flag = isNaN(value) ? false : true;
-        }
-        if (flag) {
-            this.setState({
-                keyWord: value
-            }, () => {
-                this.props.onChange({
-                    selectValue: this.state.selectValue,
-                    keyWord: this.state.keyWord
-                });
-            })
-        } else {
-            message.warning("ID查询只能输入数字！")
-        }
-
+        this.setState({
+            keyWord: value
+        }, () => {
+            this.props.onChange({
+                selectValue: this.state.selectValue,
+                keyWord: this.state.keyWord
+            });
+        })
     }
 
     // 在输入框中按回车键的时候，触发inputValue方法

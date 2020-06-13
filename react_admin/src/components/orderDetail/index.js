@@ -27,21 +27,28 @@ const OrderDetail = (props) => {
     const [form] = Form.useForm();
     const [formData, setFormData] = useState(null)
     const [data, setData] = useState([])
-    const [imageHost, setImageHost] = useState(""); //图片的根地址http://img.happymmall.com/
 
     // 初始化数据
     const initOrderData = () => {
         axios({
             method: "get",
-            url: "/manage/order/detail.do",
+            url: "/api/order/detail",
             params: {
-                orderNo: props.location.state.id
+                orderId: props.location.state.orderId
             }
         }).then(res => {
             if (res.data.status === 0) {
-                setFormData(res.data.data)
-                setData(res.data.data.orderItemVoList);
-                setImageHost(res.data.data.imageHost)
+                // 获取数据
+                let getData = res.data.data;
+                getData.status = data.status === 1 ? "已发货" : "未发货";
+                setFormData(getData);
+
+                // 获取订单详情数据，因为自带的没有总价，所以遍历计算一下
+                let orderInfo = JSON.parse(getData.orderInfo);
+                orderInfo.forEach(item => {
+                    item.totalPrice = (item.price * item.count).toFixed(2)
+                })
+                setData(orderInfo);
             }
         }).catch(err => {
             console.log(err);
@@ -52,12 +59,12 @@ const OrderDetail = (props) => {
     const columns = [
         {
             title: '商品图片',
-            dataIndex: 'productImage',
-            key: 'productImage',
+            dataIndex: 'productImageUrl',
+            key: 'productImageUrl',
             render: value => {
                 return (
                     <img
-                        src={imageHost + value}
+                        src={value}
                         alt="商品图片"
                         width="100px"
                         height="100px"
@@ -71,20 +78,20 @@ const OrderDetail = (props) => {
         },
         {
             title: '单价',
-            dataIndex: 'currentUnitPrice',
-            key: 'currentUnitPrice',
-            render: value => "￥" + value
+            dataIndex: 'price',
+            key: 'price',
+            render: value => `${value}元`
         },
         {
             title: '数量',
-            dataIndex: 'quantity',
-            key: 'quantity'
+            dataIndex: 'count',
+            key: 'count'
         },
         {
             title: '合计',
             dataIndex: "totalPrice",
             key: 'totalPrice',
-            render: value => "￥" + value
+            render: value => `${value}元`
         },
     ];
 
@@ -106,7 +113,7 @@ const OrderDetail = (props) => {
                 {/* 订单号 */}
                 <Form.Item
                     {...formItemLayout}
-                    name="orderNo"
+                    name="orderId"
                     label="订单号"
                 >
                     <Input disabled />
@@ -115,7 +122,7 @@ const OrderDetail = (props) => {
                 {/* 创建时间 */}
                 <Form.Item
                     {...formItemLayout}
-                    name="createTime"
+                    name="orderTime"
                     label="创建时间"
                 >
                     <Input disabled />
@@ -124,7 +131,7 @@ const OrderDetail = (props) => {
                 {/* 收件人 */}
                 <Form.Item
                     {...formItemLayout}
-                    name="receiverName"
+                    name="receiver"
                     label="收件人"
                 >
                     <Input disabled />
@@ -134,18 +141,8 @@ const OrderDetail = (props) => {
                 {/* 订单状态 */}
                 <Form.Item
                     {...formItemLayout}
-                    name="statusDesc"
+                    name="status"
                     label="订单状态"
-                >
-                    <Input disabled />
-                </Form.Item>
-
-
-                {/* 支付方式 */}
-                <Form.Item
-                    {...formItemLayout}
-                    name="paymentTypeDesc"
-                    label="支付方式"
                 >
                     <Input disabled />
                 </Form.Item>
@@ -153,7 +150,7 @@ const OrderDetail = (props) => {
                 {/* 订单金额 */}
                 <Form.Item
                     {...formItemLayout}
-                    name="payment"
+                    name="orderMoney"
                     label="订单金额"
                 >
                     <Input disabled />

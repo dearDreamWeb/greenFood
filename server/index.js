@@ -131,7 +131,8 @@ useRouter.use("/login", (req, res) => {
 
 // 退出登录，注销session
 useRouter.use("/loginOut", (req, res) => {
-    req.session.destroy(() => res.json({ "loginOut": true }));
+    req.session.destroy();
+    res.json({ "loginOut": true })
 });
 
 // 加入购物车
