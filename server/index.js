@@ -12,6 +12,7 @@ app.use(history());
 
 app.listen(3000);
 
+
 // post的请求body-parser
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -39,7 +40,7 @@ require("./api/address")(useRouter, crud);
 require("./api/order")(useRouter, crud);
 
 // 引入后台管理的api
-require("./api/admin")(useRouter, crud);
+require("./api/admin")(useRouter, crud, app);
 
 // 初始化商品
 useRouter.use("/goods", (req, res) => {

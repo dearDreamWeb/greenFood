@@ -1,7 +1,7 @@
-module.exports = (useRouter, crud) => {
+module.exports = (useRouter, crud, app) => {
 
     // 商品的操作
-    require("./goods")(useRouter, crud);
+    require("./goods")(useRouter, crud, app);
 
     // 管理员登录
     useRouter.post("/admin_login", (req, res) => {

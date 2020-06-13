@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, InputNumber, Upload, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import axios from "axios";
 import "./index.scss"
 const formItemLayout = {
@@ -25,6 +25,9 @@ const formTailLayout = {
 const ProductEdit = (props) => {
     const [form] = Form.useForm();
     const [isDisabled, setIsDisabled] = useState(false); //当是详情页的话，输入框为不可调试
+    const [state, setState] = useState({
+        imageUrl: "", loading: false
+    })
 
     // 如果是查看详情，所有input不能更改
     const changeInputDisabled = () => {
@@ -44,13 +47,8 @@ const ProductEdit = (props) => {
                 }
             }).then(res => {
                 let objData = res.data.list[0];//将请求的数据赋值给objData变量
+                setState({ imageUrl: objData["productImageUrl"] })
 
-                /**
-                 * 将传过来的图片转换成数组，
-                 * 因为传过来的图片数据是这样的：1.jpg,2.jpg 所以要把它转换数组[{uid:"1.jpg", url:"http://....1.jpg" }]
-                 */
-
-                objData["productImageUrl"] = [{ uid: objData.productImageUrl, url: `http://localhost:3000/images/${objData.productImageUrl}` }]
                 // antd 中设置表单某项的值
                 form.setFieldsValue(objData);
             }).catch(err => {
@@ -64,20 +62,21 @@ const ProductEdit = (props) => {
     const onCheck = async () => {
         try {
             const values = await form.validateFields();
-            // 将图片转换成数组，再转换成字符串，因为后端接口这样要求，我也没办法呀
-            // let arr = [];
-            // values.productImageUrl.forEach(item => {
-            //     arr.push(item.response.data.uri);
-            // })
-            // let imagesString = arr.join(",");
+            // 有productId说明是编辑页面，没有productId说明是添加商品页面
+            let paramsData = (props.location.state && props.location.state.productId)
+                ?
+                { ...values, productId: props.location.state.productId }
+                : values
+
+
             // 请求数据
             axios({
                 method: "get",
                 url: "/api/product_edit",
-                params: Object.assign({}, values, { productImageUrl: values.productImageUrl })
+                params: paramsData
             }).then(res => {
                 if (res.data.status === 0) {
-                    message.success(res.data.data);
+                    message.success(res.data.message);
                     props.history.push("/product/manage");
                 }
             }).catch(err => {
@@ -89,13 +88,47 @@ const ProductEdit = (props) => {
     };
 
 
-    // 图片上传后的回调
-    const normFile = e => {
-        if (Array.isArray(e)) {
-            return e;
+    // 图片上传前的校验
+    function beforeUpload(file) {
+        const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+        if (!isJpgOrPng) {
+            message.error('只能上传JPG/PNG格式的文件!');
         }
-        return e && e.fileList;
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+            message.error('上传图片大小不能超过2M');
+        }
+        return isJpgOrPng && isLt2M;
+    }
+
+    // 改变图片时
+    const handleChange = info => {
+        info.fileList.splice(0, 1); //因为只要一张图片，所以把fileList的第一个去掉，只留第二个
+        if (info.file.status === 'uploading') {
+            setState({ loading: true });
+            return;
+        }
+        if (info.file.status === 'done') {
+            if (info.file.response.status === 0) {
+                // 把图片更到form表单域中
+                form.setFieldsValue({ productImageUrl: info.file.response.filename });
+                setState({
+                    imageUrl: info.file.response.filename,  //图片的路径
+                    loading: false,
+                })
+            } else {
+                message.error(info.file.response.message);
+            }
+        }
     };
+
+    const uploadButton = (
+        <div>
+            {state.loading ? <LoadingOutlined /> : <PlusOutlined />}
+            <div className="ant-upload-text">选择图片</div>
+        </div>
+    );
+    const { imageUrl } = state;
 
     // 生命周期组件初始化
     useEffect(() => {
@@ -141,7 +174,7 @@ const ProductEdit = (props) => {
                         max={100000000}
                         step="5"
                         formatter={value => `${value}￥/斤`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={value => value.replace(/￥\s?|(,*)/g, '')}
+                        parser={value => value.replace(/￥\/斤\s?|(,*)/g, '')}
                         disabled={isDisabled}
                     />
                 </Form.Item>
@@ -151,13 +184,19 @@ const ProductEdit = (props) => {
                     {...formItemLayout}
                     name="productImageUrl"
                     label="商品图片"
-                    valuePropName="fileList"
-                    getValueFromEvent={normFile}
                 >
-                    <Upload name="upload_file" action="/api/productImage_upload" listType="picture" disabled={isDisabled}>
-                        <Button disabled={isDisabled}>
-                            <UploadOutlined />点击上传
-                        </Button>
+                    <Upload
+                        name="avatar"
+                        method="post"
+                        disabled={isDisabled}
+                        listType="picture-card"
+                        className="avatar-uploader"
+                        showUploadList={false}
+                        action="/api/productIamge_upload"
+                        beforeUpload={beforeUpload}
+                        onChange={handleChange}
+                    >
+                        {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
                     </Upload>
                 </Form.Item>
 

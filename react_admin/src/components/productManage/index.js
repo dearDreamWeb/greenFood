@@ -2,7 +2,7 @@ import React from "react";
 import { withRouter, Link } from "react-router-dom";
 import ContentTitle from "../contentTitle";
 import axios from "axios";
-import { Table, message, Button } from 'antd';
+import { Table, message, Button, Popconfirm } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import "./index.scss";
 import ProductSearch from "../productSearch";
@@ -146,6 +146,24 @@ class ProductManage extends React.Component {
         this.props.history.push({ pathname: '/product/edit', state: { productId: data.productId } });
     }
 
+    // 删除商品
+    removeProduct(data) {
+        axios({
+            method: "delete",
+            url: "/api/remove_product",
+            params: {
+                productId: data.productId
+            }
+        }).then(res => {
+            // 后端删除成功，前端也把data数据中的数据删除
+            if (res.data.status === 0) {
+                this.setState({
+                    data: this.state.data.filter(item => item.productId !== data.productId)
+                }, () => message.success(res.data.message));
+            }
+        }).catch(err => console.log(err));
+    }
+
     render() {
         // 表头
         const columns = [
@@ -162,15 +180,20 @@ class ProductManage extends React.Component {
             {
                 title: '价格',
                 dataIndex: 'price',
-                render: data => "￥" + data + "/斤"
+                render: data => data + "￥/斤"
             },
             {
                 title: '操作',
-                width: '10%',
+                width: '15%',
+                fixed: 'right',
                 // dataIndex: 'phone',
                 render: (data, record) => <span className="optionWrap">
                     <a className="option" onClick={() => this.jumpProductDetail(record)}>详情</a>
                     <a className="option" onClick={() => this.jumpProductEdit(record)}>编辑</a>
+                    <Popconfirm title="确定删除吗？" onConfirm={() => this.removeProduct(record)}>
+                        <a className="option">删除</a>
+                    </Popconfirm>
+
                 </span>
             }
         ];

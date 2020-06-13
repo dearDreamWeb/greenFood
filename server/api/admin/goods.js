@@ -1,4 +1,4 @@
-module.exports = (useRouter, crud) => {
+module.exports = (useRouter, crud, app) => {
 
     // 初始化商品数据
     useRouter.get("/init_goods", (req, res) => {
@@ -56,5 +56,66 @@ module.exports = (useRouter, crud) => {
 
 
 
+    })
+
+
+    // 前端编辑页面上传的商品图片
+    const multer = require('multer');
+    const path = require("path");
+    const fs = require("fs");
+    //解析图片文件,并保存位置
+    const upload = (multer({ dest: path.resolve(__dirname, "../../static/product") }).any());
+    useRouter.post("/productIamge_upload", upload, (req, res) => {
+
+        // 给图片重命名
+        fs.rename(req.files[0].path, req.files[0].path + path.parse(req.files[0].originalname).ext, (err) => {
+            if (err) {
+                res.json({
+                    status: 1,
+                    message: "图片上传失败"
+                })
+            } else {
+                res.json({
+                    status: 0,
+                    filename: `http://localhost:3000/images/product/${req.files[0].filename + path.parse(req.files[0].originalname).ext}`
+                })
+            }
+        })
+    })
+
+
+    // 商品编辑
+    useRouter.get("/product_edit", (req, res) => {
+        const { productId, productName, price, productImageUrl } = req.query;
+        if (productId) {
+            crud(
+                "UPDATE `goods` SET productName=?, price=?, productImageUrl=? WHERE productId=?",
+                [productName, price, productImageUrl, productId], () => {
+                    res.json({
+                        status: 0,
+                        message: "修改商品成功"
+                    })
+                })
+        } else {
+            let randomId = require("../../randomId")();
+            crud("INSERT INTO `goods` SET ?", { productId: randomId, productName, price, productImageUrl }, () => {
+                res.json({
+                    status: 0,
+                    message: "添加商品成功"
+                })
+            })
+        }
+
+    })
+
+
+    // 删除商品
+    useRouter.delete("/remove_product", (req, res) => {
+        crud("DELETE FROM `goods` WHERE productId =?", [req.query.productId], () => {
+            res.json({
+                status: 0,
+                message: "删除商品成功"
+            })
+        })
     })
 }

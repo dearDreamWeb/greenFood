@@ -38,7 +38,7 @@
             class="goodsItem"
           >
             <img
-              src="http://localhost/images/loading-svg/loading-bars.svg"
+              src="http://localhost:3000/images/loading-svg/loading-bars.svg"
               class="images"
               data-isLoaded="0"
               :data-src="item.productImageUrl"
