@@ -1,0 +1,81 @@
+// 订单的实体类
+public class Order {
+  private String oid; // 订单id
+  private Date ordertime; // 订单时间
+  private Double total; // 订单总金额
+  private Integer state; // 订单状态,1:未付款 2:已付款但为发货 3:已发货 4:确认收货
+  private String address; // 收货地址
+  private String name; // 收货人
+  private String telephone; // 收货人联系方式
+  private User user; // 订单所属用户
+  /**
+   * 保存该订单中的所有的订单项,方便在查询用户订单时使用
+   */
+  private List<OrderItem> orderItems = new LinkedList<OrderItem>();
+  ...get/set方法
+}
+// 订单项实体类
+public class OrderItem {
+  private String itemid; // 订单项id
+  private Integer count; // 商品个数
+  private Double subtotal; // 金额小计
+  private Product product; // 订单项中的商品
+  private Order order; // 订单项所属的订单
+ ...get/set方法
+}
+@Override
+/**
+ * 根据用户的id查询该用户的所有订单
+ */
+public List<Order> findByUid(String uid, Integer begin, Integer pageSize) throws SQLException, IllegalAccessException, InvocationTargetException {
+  QueryRunner queryRunner = new QueryRunner(JDBCUtils.getDataSource());
+  // 先查询该用户所有的订单
+  String sql = "select * from orders where uid=? order by ordertime desc limit ?,?";
+  List<Order> order_list = queryRunner.query(sql, new BeanListHandler<Order>(Order.class), uid, begin, pageSize);
+  // 查询订单对应的订单项
+  for (Order order : order_list) {
+      // 查询该订单下的订单项对应所有商品信息
+      sql = "select * from orderitem o,product p where o.pid=p.pid and oid=?";
+      List<Map<String, Object>> map_list = queryRunner.query(sql, new MapListHandler() , order.getOid());
+      for (Map<String, Object> map : map_list) {
+          // 封装订单项数据
+          OrderItem item = new OrderItem();
+          BeanUtils.populate(item, map);
+          item.setOrder(order);
+          // 封装订单项中商品数据
+          Product product = new Product();
+          BeanUtils.populate(product, map);
+          item.setProduct(product);
+          // 将订单项添加到订单中
+          order.getOrderItems().add(item);
+      }
+  }
+  return order_list;
+}
+
+@Override
+/**
+ * 根据订单id查询订单信息
+ */
+public Order findByOid(String oid) throws SQLException, IllegalAccessException, InvocationTargetException {
+  QueryRunner queryRunner = new QueryRunner(JDBCUtils.getDataSource());
+  // 1.查询订单信息
+  String sql = "select * from orders where oid = ?";
+  Order order = queryRunner.query(sql, new BeanHandler<Order>(Order.class), oid);
+  // 2.根据订单id查询订单项
+  sql = "select * from orderitem o,product p where o.pid=p.pid and o.oid=?";
+  List<Map<String, Object>> map = queryRunner.query(sql, new MapListHandler(), oid);
+  for (Map<String, Object> map2 : map) {
+      // 3.封装商品数据
+      Product product = new Product();
+      BeanUtils.populate(product, map2);
+      // 4.封装订单项数据
+      OrderItem orderItem = new OrderItem();
+      BeanUtils.populate(orderItem, map2);
+      orderItem.setProduct(product);
+      orderItem.setOrder(order);
+      // 5.将订单项添加到订单中
+      order.getOrderItems().add(orderItem);
+  }
+  return order;
+}
