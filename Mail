@@ -1,0 +1,132 @@
+/**系统用户注册接口-方式2
+	 * @return
+	 */
+	@RequestMapping(value="/regist2",method=RequestMethod.POST)
+	@ResponseBody
+	public Object regist2(){
+		logBefore(logger, "XXX官网用户注册接口");
+		Map<String,Object> map = new HashMap<String,Object>();
+		PageData pd = new PageData();
+		pd = this.getPageData();
+		String code = "100";
+		String msg_cn = "系统错误";
+		
+		try{
+				if(Chain8Util.checkParam("regist2", pd)){//第一步：判断请求参数是否完整（调封装的工具类方法-大致逻辑：定常量数组，对应属性长度，用标识来定位）	
+					PageData pd2 = register8Service.findByEmail(pd);
+					
+					if(pd2!=null) {//第二步：判断邮箱是否已注册
+						
+						if(pd2.getString("status").equals("1")) {
+							code = "101";
+							msg_cn = "该邮箱已注册并激活";
+						}else if(pd2.getString("status").equals("0")){//注册但未激活，重新发送
+							
+							String token = this.get32UUID();//获取32位uuid作为激活token
+							if(Register8EmailUtil.sendJihuo(pd.getString("email"),token )){//第五步：发送激活邮件(调用邮件工具类)
+								
+								//######   邮件成功发送后，将对应信息存入数据库       ######
+								pd.put("password", pd.getString("password1"));
+								pd.put("status", "0");
+								pd.put("token", token);
+								register8Service.edit(pd);//修改数据库数据，重新赋值
+								code = "300";
+								msg_cn = "注册成功，请前往邮箱激活账号，方可登录";	
+								
+							}else {
+								code = "100";
+								msg_cn = "系统错误";
+							}
+						}		
+					}else {
+						if(Tools.checkEmail(pd.getString("email"))) {//第三步：判断邮箱格式（调封装的工具类方法）
+							if(pd.getString("password1").equals(pd.getString("password2"))) {//第四步：判断两次密码是否一致
+								
+								String token = this.get32UUID();//获取32位uuid作为激活token
+								if(Register8EmailUtil.sendJihuo(pd.getString("email"),token )){//第五步：发送激活邮件(调用邮件工具类)
+									
+									//######   邮件成功发送后，将对应信息存入数据库       ######
+									pd.put("password", pd.getString("password1"));
+									pd.put("status", "0");
+									pd.put("token", token);
+									register8Service.save(pd);//保存	
+									code = "300";
+									msg_cn = "注册成功，请前往邮箱激活账号，方可登录";	
+								}else {
+									code = "100";
+									msg_cn = "系统错误";
+								}
+								
+							}else {
+								code = "103";
+								msg_cn = "两次密码不一致"; 		
+							}		
+						}else {
+							code = "102";
+							msg_cn = "邮箱格式不合法";
+						}		
+					}
+				}else {
+					code = "200";
+					msg_cn = "请填写完整信息";
+				}
+			
+		}catch (Exception e){
+			logger.error(e.toString(), e);
+		}finally{
+			map.put("code", code);
+			map.put("msg_cn", msg_cn);
+			logAfter(logger);
+		}
+		return AppUtil.returnObject(new PageData(), map);
+	}
+	
+	
+	
+	/**官网用户帐户激活接口-
+	 * @return
+	 */
+	@RequestMapping(value="/jihuo")
+	@ResponseBody
+	public Object jihuo(){
+		logBefore(logger, "XXX官网用户帐号激活接口");
+		Map<String,Object> map = new HashMap<String,Object>();
+		PageData pd = new PageData();
+		pd = this.getPageData();
+		String code = "100";
+		String msg_cn = "系统错误";
+		
+		try{
+				if(Chain8Util.checkParam("jihuo", pd)){//第一步：判断请求参数是否完整（调封装的工具类方法-大致逻辑：定常量数组，对应属性长度，用标识来定位）	
+					
+					PageData pd2 = register8Service.findByEmail(pd); 
+					String tokenMysql = pd2.getString("token");
+					String token = pd.getString("token");
+					
+					if(tokenMysql.equals(token)) {
+						
+						pd.put("status", "1");
+						register8Service.edit(pd);//修改数据库帐户激活状态，为登录判断用
+						code = "102";
+						msg_cn = "激活成功。能登录了";
+					}else {
+						code = "101";
+						msg_cn = "激活链接失效";
+					}
+				}else {
+					code = "200";
+					msg_cn = "请填写完整信息";
+				}
+			
+		}catch (Exception e){
+			logger.error(e.toString(), e);
+		}finally{
+			map.put("code", code);
+			map.put("msg_cn", msg_cn);
+			logAfter(logger);
+		}
+		return AppUtil.returnObject(new PageData(), map);
+	}
+————————————————
+版权声明：本文为CSDN博主「cg8750」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/weixin_42164766/java/article/details/81288820
