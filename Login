@@ -1,0 +1,206 @@
+public class UserServlet extends BaseServlet {
+ ...
+/**
+ * 用户登陆页面
+ */
+public String userLoginUI(HttpServletRequest request, HttpServletResponse response){
+  // 获取客户端请求中的Cookie  实现记住用户名功能
+  Cookie[] cookies = request.getCookies();
+  // 查找是否记住用户名的Cookie
+  Cookie findCookie = CookieUtils.findCookie(cookies, "remember");
+  // 当Cookie有记住用户名时,将用户名保存在request域中
+  if(findCookie != null) {
+      request.setAttribute("remember", findCookie.getValue());
+  }
+  return "/jsp/login.jsp";
+}
+
+/**
+ * 用户登陆的校验
+ */
+public String checkLogin(HttpServletRequest request, HttpServletResponse response){
+  // 获取表单中的数据
+  String code = request.getParameter("code");
+  String username = request.getParameter("username");
+  String password = request.getParameter("password");
+  // 校验表单中的数据
+  response.setContentType("text/html;charset=UTF-8");
+  try {
+      if(code == null || "".equals(code) || username == null || "".equals(username) || password == null || "".equals(password)) {
+          response.getWriter().println("{\"msg\":\"null\"}");
+          return null;
+      }
+  } catch (IOException e) {
+      e.printStackTrace();
+  }
+
+  // 获取session中的验证码
+  String incode = (String) request.getSession().getAttribute("iconCode");
+  // 清除session中本次的验证码
+  request.getSession().removeAttribute("iconCode");
+
+  // 校验验证码是否正确
+  if(!incode.equalsIgnoreCase(code)) {
+      try {
+          response.getWriter().println("{\"msg\":\"no\"}");
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
+      return null;
+  }
+
+  // 封装数据
+  User user = new User();
+  user.setUsername(username);
+  user.setPassword(password);
+  // 调用业务层进行查询用户是否存在
+  // UserService userService = new UserServiceImpl();
+  UserService userService = (UserService) BeanFactory.getBean("UserService");
+  try {
+      User existUser  = userService.checkUser(user);
+      // 判断用户是否存在
+      if(existUser == null) {
+          response.getWriter().println("{\"msg\":\"no\"}");
+      } else {
+          // 用户登陆成功
+          // 将用户信息保存在session中
+
+          // 判断是否勾选自动登陆,如果自动登陆勾选,则将用户的登陆信息保存在cookie中
+          String autoLogin = request.getParameter("autoLogin");
+          if("true".equals(autoLogin)) {
+              // 将用户名和密码以  username敏password形式存储在Cookie中
+              String username_password = existUser.getUsername()+"敏"+existUser.getPassword();
+              // 将用户名和密码进行加密,将加密后的字符串保存在Cookie中
+              String encrypt = DesUtils.encrypt(username_password);
+              Cookie cookie  = new Cookie("autoLogin",encrypt);
+              // 设置Cookie的有效路径
+              cookie.setPath(request.getContextPath()); // 有效路径是当前项目的路径
+              // 设置Cookie的有效时间,7天
+              cookie.setMaxAge(60 * 60 * 24 * 7);
+              // 将Cookie写到客户端
+              response.addCookie(cookie);
+          }
+          // 判断是否勾选记住用户名,勾选时,则将用户名保存在Cookie中
+          String remember = request.getParameter("remember");
+          if("true".equals(remember)) {
+              Cookie rcookie = new Cookie("remember", existUser.getUsername());
+              // 设置Cookie的有效路径
+              rcookie.setPath(request.getContextPath()); // 有效路径是当前项目的路径
+              // 设置Cookie的有效时间,7天
+              rcookie.setMaxAge(60 * 60 * 24 * 7);
+              // 将Cookie写到客户端
+              response.addCookie(rcookie);
+          } else {
+              Cookie[] cookies = request.getCookies();
+              Cookie findCookie = CookieUtils.findCookie(cookies, "remember");
+              if(findCookie != null) {
+                  // 设置Cookie的有效路径
+                  findCookie.setPath(request.getContextPath()); // 有效路径是当前项目的路径
+                  // 设置Cookie的时间为0
+                  findCookie.setMaxAge(0);
+                  // 将Cookie写到客户端
+                  response.addCookie(findCookie);
+              }
+          }
+
+          // 将用登陆的信息保存在session中
+          request.getSession().setAttribute("existUser", existUser);
+          response.getWriter().println("{\"msg\":\"ok\"}");
+      }
+      return null;
+  } catch (Exception e) {
+      e.printStackTrace();
+  }
+  return null;
+}
+
+/**
+ * 用户安全退出的方法
+ * @Title: userLogOut
+ * @Description: TODO(安全退出)
+ * @param: @param request
+ * @param: @param response
+ * @param: @return   
+ * @return: String   
+ */
+public String userLogOut(HttpServletRequest request, HttpServletResponse response){
+  // 1. 清除session中的信息
+  request.getSession().removeAttribute("existUser");
+  // 2. 清除Cookie中保存的用户的信息
+  Cookie[] cookies = request.getCookies();
+  Cookie findCookie = CookieUtils.findCookie(cookies, "autoLogin");
+  if(findCookie != null) {
+      // 设置Cookie的有效路径
+      findCookie.setPath(request.getContextPath()); // 有效路径是当前项目的路径
+      // 设置Cookie的时间为0
+      findCookie.setMaxAge(0);
+      // 将Cookie写到客户端
+      response.addCookie(findCookie);
+  }
+  // 跳转到主页面
+  return "/index.jsp";
+}
+/**
+ * 用户自动登录的过滤器
+ */
+public class AutoLoginFilter implements Filter {
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {}
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response,
+          FilterChain chain) throws IOException, ServletException {
+      HttpServletRequest hsrequest = (HttpServletRequest) request;
+      // 1.校验session中是否含有用户信息
+      User existUser = (User) hsrequest.getSession().getAttribute("existUser");
+      // 1.1 session中含有用户的登陆信息,直接放行
+      if(existUser != null) {
+          chain.doFilter(hsrequest, response);
+          return;
+      }
+      // 1.2 session中不含有用户的登陆信息,则查找Cookie中是否有用户的登陆信息
+      Cookie[] cookies = hsrequest.getCookies();
+      Cookie findCookie = CookieUtils.findCookie(cookies,"autoLogin");
+      // 2. Cookie中不含有用户的信息时,直接放行
+      if(findCookie == null) {
+          chain.doFilter(hsrequest, response);
+          return;
+      }
+      // 3. Cookie中含有用户的信息,则取出Cookie中的用户名和密码,到数据库中进行校验
+      String cookiValue = findCookie.getValue();
+      // 进行解密
+      try {
+          String username_password = DesUtils.decrypt(cookiValue);
+          User user = new User();
+          user.setUsername(username_password.split("敏")[0]);
+          user.setPassword(username_password.split("敏")[1]);
+
+          // 调用业务层进行查询
+          // UserService userService = new UserServiceImpl();
+          UserService userService = (UserService) BeanFactory.getBean("UserService");
+          User checkUser = userService.checkUser(user);
+          // 3.1 如果用户信息校验不通过,直接放行
+          if(checkUser == null) {
+              chain.doFilter(hsrequest, response);
+              return;
+          }
+          // 3.2 如果用户信息校验成功,则将用户的信息保存在session域中,然后放行
+          hsrequest.getSession().setAttribute("existUser", checkUser);
+          chain.doFilter(hsrequest, response);
+      } catch (Exception e) {
+          e.printStackTrace();
+      }
+  }
+  @Override
+  public void destroy() {
+  }
+}
+
+<!-- 自动登录过滤器  web.xml文件配置 -->
+<filter>
+  <filter-name>AutoLoginFilter</filter-name>
+  <filter-class>com.store.web.filter.AutoLoginFilter</filter-class>
+</filter>
+<filter-mapping>
+  <filter-name>AutoLoginFilter</filter-name>
+  <url-pattern>/*</url-pattern>
+</filter-mapping>
