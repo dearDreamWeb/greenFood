@@ -1,0 +1,52 @@
+public class CharacterEncodingFilter implements Filter {
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {
+  }
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response,
+          FilterChain chain) throws IOException, ServletException {
+          // 将ServletRequest的对象转换为HttpServletRequest对象
+      final HttpServletRequest hsrequest = (HttpServletRequest) request;
+          // 通过动态代理的方式，在原始的request的获取参数之前设置编码格式，防止中文乱码
+      HttpServletRequest myrequest = (HttpServletRequest) Proxy.newProxyInstance(hsrequest.getClass().getClassLoader(), hsrequest.getClass().getInterfaces(), new InvocationHandler() {
+          @Override
+          public Object invoke(Object proxy, Method method, Object[] args)
+                  throws Throwable {
+              // 获取请求的方式
+              String reqmethod = hsrequest.getMethod();
+              // get方式只增强getParameter方法
+              // 获取方法的名称
+              String methodName = method.getName();
+              if("get".equalsIgnoreCase(reqmethod)) {
+                  // 当方法名为getParameter改变编码
+                  if("getParameter".equals(methodName)) {
+                      // 获取参数的值,并进行转换编码
+                      String value = (String) method.invoke(hsrequest, args);
+                      return new String(value.getBytes("ISO-8859-1"), "UTF-8");
+                  }
+              // post方式只增强getParameter和getParameterMap方法
+              } else if("post".equalsIgnoreCase(reqmethod)) {
+                  if("getParameter".equals(methodName) || "getParameterMap".equals(methodName)) {
+                      // 设置request域中的编码
+                      hsrequest.setCharacterEncoding("UTF-8");
+                  }
+              }
+              return method.invoke(hsrequest, args);
+          }
+      });
+      chain.doFilter(myrequest, response);
+  }
+  @Override
+  public void destroy() {
+  }
+}
+// 在项目的web.xml文件中配置过滤器
+<!-- 统一字符集编码过滤器 -->
+<filter>
+    <filter-name>CharacterEncodingFilter</filter-name>
+    <filter-class>com.store.web.filter.CharacterEncodingFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>CharacterEncodingFilter</filter-name>
+    <url-pattern>/*</url-pattern> // 过滤所有的请求
+</filter-mapping>
