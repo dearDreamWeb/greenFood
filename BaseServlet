@@ -1,0 +1,30 @@
+public class BaseServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            // 获取子类
+            Class clas = this.getClass();
+
+            // 获取表单数据，我定义的method字段为请求的方法的名称
+            String mName = request.getParameter("method");
+            if (mName == null) {
+                mName = "index"; // 当方法名为null时，让其为index，就会调用到定义的index方法
+            }
+            System.out.println(mName);
+            // 通过方法名mName获取请求的方法
+            Method method = clas.getMethod(mName, HttpServletRequest.class, HttpServletResponse.class);
+            // 执行方法, 我定义的方法的返回值为请求转发的路径
+            String path = (String) method.invoke(this, request, response);
+            // 判断请求转发路径是否为空，不为空，就进行请求转发
+            if (path != null) {
+                request.getRequestDispatcher(path).forward(request, response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+        
+    }
+}
