@@ -13,39 +13,39 @@ const columns = [
     },
     {
         title: '用户名',
-        dataIndex: 'username',
+        dataIndex: 'userName',
         // width: '20%',
     },
-    {
-        title: '邮箱',
-        dataIndex: 'email',
-    },
-    {
-        title: '手机号',
-        dataIndex: 'phone',
-    },
-    {
-        title: '注册时间',
-        dataIndex: 'createTime',
-        render: (data) => {
-            // 修改一下时间的格式，因为默认的时间格式有"上午"和"下午"这俩个词，所以替换成24小时制，
-            if (new Date(data).toLocaleString().includes("上午")) {
-                let time = new Date(data).toLocaleTimeString();
-                time = time.replace(new RegExp(/^上午/), " ");
-                return new Date(data).toLocaleDateString() + time;
-            } else {
-                let time = new Date(data).toLocaleTimeString().split(":");
-                time[0] = time[0].replace(new RegExp(/^下午/, "g"), "");
-                // 因为中午12点算是下午，所以当遇到12点就不加12了
-                if (parseInt(time[0]) !== 12) {
-                    time[0] = parseInt(time[0]) + 12;
-                }
-                time[0] = " " + time[0];
-                time = time.join(":");
-                return new Date(data).toLocaleDateString() + time;
-            }
-        }
-    }
+    // {
+    //     title: '邮箱',
+    //     dataIndex: 'email',
+    // },
+    // {
+    //     title: '手机号',
+    //     dataIndex: 'phone',
+    // },
+    // {
+    //     title: '注册时间',
+    //     dataIndex: 'createTime',
+    //     render: (data) => {
+    //         // 修改一下时间的格式，因为默认的时间格式有"上午"和"下午"这俩个词，所以替换成24小时制，
+    //         if (new Date(data).toLocaleString().includes("上午")) {
+    //             let time = new Date(data).toLocaleTimeString();
+    //             time = time.replace(new RegExp(/^上午/), " ");
+    //             return new Date(data).toLocaleDateString() + time;
+    //         } else {
+    //             let time = new Date(data).toLocaleTimeString().split(":");
+    //             time[0] = time[0].replace(new RegExp(/^下午/, "g"), "");
+    //             // 因为中午12点算是下午，所以当遇到12点就不加12了
+    //             if (parseInt(time[0]) !== 12) {
+    //                 time[0] = parseInt(time[0]) + 12;
+    //             }
+    //             time[0] = " " + time[0];
+    //             time = time.join(":");
+    //             return new Date(data).toLocaleDateString() + time;
+    //         }
+    //     }
+    // }
 ];
 
 class UsersList extends React.Component {
@@ -68,7 +68,6 @@ class UsersList extends React.Component {
 
     // 生命周期：组件加载完成
     componentDidMount() {
-        this.initUserCount();
         this.inintData();
     }
 
@@ -79,7 +78,7 @@ class UsersList extends React.Component {
     handleTableChange = (pagination) => {
         axios({
             method: "get",
-            url: "/manage/user/list.do",
+            url: "/api/user/list",
             params: {
                 pageSize: pagination.pageSize,
                 pageNum: pagination.current
@@ -100,31 +99,19 @@ class UsersList extends React.Component {
         })
     };
 
-    // 初始化用户总数
-    initUserCount() {
-        axios.get("/manage/statistic/base_count.do").then(res => {
-            if (res.data.status === 0) {
-                this.setState({
-                    pagination: Object.assign({}, this.state.pagination, { total: res.data.data.userCount })
-                })
-            }
-        }).catch(err => {
-            console.log(err);
-        });
-    }
-
     // 初始化用户数据
     inintData = () => {
         this.setState({ loading: true });
         axios({
             method: "get",
-            url: "/manage/user/list.do"
+            url: "/api/init_users"
         }).then(res => {
             // 请求成功后数据赋值
             if (res.data.status === 0) {
                 this.setState({
-                    data: res.data.data.list,
-                    loading: false
+                    data: res.data.list,
+                    loading: false,
+                    pagination: Object.assign({}, this.state.pagination, { total: res.data.total })
                 })
             }
         }).catch(err => {

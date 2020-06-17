@@ -6,6 +6,9 @@ module.exports = (useRouter, crud, app) => {
     // 订单的操作
     require("./order")(useRouter, crud);
 
+    // 用户的操作
+    require("./users")(useRouter, crud);
+
     // 管理员登录
     useRouter.post("/admin_login", (req, res) => {
         crud("SELECT * FROM `admin_users` WHERE adminName=? AND adminPassword=?",
